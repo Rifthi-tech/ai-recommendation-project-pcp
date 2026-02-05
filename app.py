@@ -126,47 +126,44 @@ def get_product_image(product_id):
     return None
 
 
-def display_product_card(product, show_recommend_btn=True):
+def display_product_card(product, show_buy_btn=True):
     """Display a product card"""
-    col1, col2 = st.columns([1, 3])
-
-    with col1:
-        # Display product image
-        image_url = get_product_image(product['product_id'])
-        if image_url:
-            try:
-                response = requests.get(image_url, timeout=5)
-                img = Image.open(BytesIO(response.content))
-                st.image(img, width=150)
-            except:
-                st.image("https://via.placeholder.com/150x150/CCCCCC/000000?text=No+Image", width=150)
-        else:
+    # Display product image
+    image_url = get_product_image(product['product_id'])
+    if image_url:
+        try:
+            response = requests.get(image_url, timeout=5)
+            img = Image.open(BytesIO(response.content))
+            st.image(img, width=150)
+        except:
             st.image("https://via.placeholder.com/150x150/CCCCCC/000000?text=No+Image", width=150)
+    else:
+        st.image("https://via.placeholder.com/150x150/CCCCCC/000000?text=No+Image", width=150)
 
-    with col2:
-        st.markdown(f"<div class='product-title'>{product['title']}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='product-title'>{product['title'][:50]}...</div>", unsafe_allow_html=True)
 
-        # Rating stars
-        rating = product.get('rating', 0)
-        stars = "⭐" * int(rating) + "☆" * (5 - int(rating))
-        st.markdown(f"<div class='product-rating'>{stars} ({rating})</div>", unsafe_allow_html=True)
+    # Rating stars
+    rating = product.get('rating', 0)
+    stars = "⭐" * int(rating) + "☆" * (5 - int(rating))
+    st.markdown(f"<div class='product-rating'>{stars} ({rating})</div>", unsafe_allow_html=True)
 
-        # Price
-        price = product.get('initial_price', 0)
-        st.markdown(f"<div class='product-price'>₹{price:,.0f}</div>", unsafe_allow_html=True)
+    # Price
+    price = product.get('initial_price', 0)
+    st.markdown(f"<div class='product-price'>₹{price:,.0f}</div>", unsafe_allow_html=True)
 
-        # Category
-        category = product.get('category', 'Uncategorized')
-        st.caption(f"Category: {category}")
+    # Category
+    category = product.get('category', 'Uncategorized')
+    st.caption(f"Category: {category}")
 
-        # Product ID
-        st.caption(f"Product ID: {product['product_id']}")
+    # Product ID
+    st.caption(f"ID: {product['product_id']}")
 
-        # Recommend button
-        if show_recommend_btn:
-            if st.button(f"Get Similar Products", key=f"btn_{product['product_id']}"):
-                st.session_state.selected_product = product['product_id']
-                st.rerun()
+    # Buy button
+    if show_buy_btn:
+        if st.button(f"🛒 Buy Now", key=f"buy_{product['product_id']}", use_container_width=True):
+            st.session_state.selected_product = product['product_id']
+            st.success(f"Added to cart: {product['title'][:30]}...")
+            st.rerun()
 
 
 def get_recommendations(product_id, n=5):
@@ -214,165 +211,97 @@ def main():
     if 'selected_product' not in st.session_state:
         st.session_state.selected_product = None
 
-    # Sidebar
-    with st.sidebar:
-        st.header("🔍 Search & Filter")
-
-        # Category filter
-        categories = ['All'] + sorted(df['category'].unique().tolist())
-        selected_category = st.selectbox("Filter by Category", categories)
-
-        # Price range filter
-        min_price = float(df['initial_price'].min())
-        max_price = float(df['initial_price'].max())
-        price_range = st.slider(
-            "Price Range (₹)",
-            min_value=min_price,
-            max_value=max_price,
-            value=(min_price, max_price)
-        )
-
-        # Rating filter
-        min_rating = st.slider("Minimum Rating", 0.0, 5.0, 3.0, 0.5)
-
-        st.markdown("---")
-        st.header("📊 Statistics")
-        st.write(f"Total Products: {len(df)}")
-        st.write(f"Categories: {len(df['category'].unique())}")
-        st.write(f"Avg Rating: {df['rating'].mean():.2f}")
-
-        # Search by ID
-        st.markdown("---")
-        st.header("🔎 Search Product")
-        search_id = st.number_input("Enter Product ID", min_value=int(df['product_id'].min()),
-                                    max_value=int(df['product_id'].max()), value=8376765)
-        if st.button("Search by ID"):
-            st.session_state.selected_product = int(search_id)
-            st.rerun()
-
-    # Main content area
-    col1, col2 = st.columns([3, 1])
-
-    with col1:
-        # Product Grid Section
-        st.header("📦 Available Products")
-
-        # Filter products
-        filtered_df = df.copy()
-        if selected_category != 'All':
-            filtered_df = filtered_df[filtered_df['category'] == selected_category]
-
-        filtered_df = filtered_df[
-            (filtered_df['initial_price'] >= price_range[0]) &
-            (filtered_df['initial_price'] <= price_range[1]) &
-            (filtered_df['rating'] >= min_rating)
-            ]
-
-        # Display products in grid
-        cols = st.columns(3)
-        for idx, product in filtered_df.head(18).iterrows():  # Show first 18 products
-            with cols[idx % 3]:
-                with st.container():
-                    st.markdown("<div class='product-card'>", unsafe_allow_html=True)
-                    display_product_card(product)
-                    st.markdown("</div>", unsafe_allow_html=True)
-
+    # Main content area - Products Grid
+    st.header("📦 All Products")
+    
+    # Pagination
+    products_per_page = 10
+    total_pages = (len(df) - 1) // products_per_page + 1
+    
+    # Page selector
+    col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        # Recommendations Section
-        st.header("🎯 Quick Recommendations")
+        page = st.selectbox("Select Page", range(1, total_pages + 1), key="page_selector")
+    
+    start_idx = (page - 1) * products_per_page
+    end_idx = start_idx + products_per_page
+    page_df = df.iloc[start_idx:end_idx]
+    
+    st.write(f"Showing products {start_idx + 1} to {min(end_idx, len(df))} of {len(df)} total products")
 
-        # Show popular products
-        st.subheader("🔥 Popular Products")
-        popular_products = df.nlargest(5, 'rating')
-        for _, product in popular_products.iterrows():
-            with st.container():
-                st.markdown(f"**{product['title'][:30]}...**")
-                st.write(f"⭐ {product['rating']} | ₹{product['initial_price']:,}")
-                if st.button("Similar", key=f"pop_{product['product_id']}"):
-                    st.session_state.selected_product = product['product_id']
-                    st.rerun()
-                st.divider()
+    # Display products in 5-column grid
+    cols = st.columns(5)
+    for idx, (_, product) in enumerate(page_df.iterrows()):
+        with cols[idx % 5]:
+            display_product_card(product)
 
-    # Recommendations Display Section (Full Width)
+    # Recommendations Section (Only shows when a product is bought/added to cart)
     if st.session_state.selected_product is not None:
         st.markdown("---")
-        st.header("🎯 Product Recommendations")
-
+        st.markdown("## 🛒 You might also like these products")
+        
         # Get selected product details
         selected_product = df[df['product_id'] == st.session_state.selected_product]
         if len(selected_product) > 0:
             selected_product = selected_product.iloc[0]
 
-            # Display selected product
-            st.subheader("Selected Product:")
-            col1, col2 = st.columns([1, 3])
-
-            with col1:
-                image_url = get_product_image(selected_product['product_id'])
-                if image_url:
-                    try:
-                        response = requests.get(image_url, timeout=5)
-                        img = Image.open(BytesIO(response.content))
-                        st.image(img, width=200)
-                    except:
-                        st.image("https://via.placeholder.com/200x200/CCCCCC/000000?text=No+Image", width=200)
-
-            with col2:
-                st.markdown(f"### {selected_product['title']}")
-                st.write(f"**Category:** {selected_product.get('category', 'N/A')}")
-                st.write(f"**Rating:** ⭐ {selected_product.get('rating', 'N/A')}")
-                st.write(f"**Price:** ₹{selected_product.get('initial_price', 'N/A'):,}")
-                st.write(f"**Product ID:** {selected_product['product_id']}")
-
-            # Get recommendations
-            recommendations = get_recommendations(st.session_state.selected_product, 6)
+            # Display selected product info
+            st.info(f"**Based on your purchase:** {selected_product['title']} (₹{selected_product['initial_price']:,})")
+            
+            # Clear recommendations button
+            if st.button("❌ Clear Recommendations", use_container_width=False):
+                st.session_state.selected_product = None
+                st.rerun()
+            
+            # Get recommendations using the ML model
+            with st.spinner("🤖 Finding similar products you might like..."):
+                recommendations = get_recommendations(st.session_state.selected_product, 10)
 
             if recommendations:
-                st.subheader(f"Similar Products ({len(recommendations)} found):")
-
+                st.success(f"Here are {len(recommendations)} products similar to your purchase!")
+                
                 # Display recommendations in grid
-                rec_cols = st.columns(3)
+                rec_cols = st.columns(5)
                 for i, rec in enumerate(recommendations):
-                    with rec_cols[i % 3]:
-                        with st.container():
-                            st.markdown("<div class='product-card'>", unsafe_allow_html=True)
+                    with rec_cols[i % 5]:
+                        # Display recommendation
+                        image_url = get_product_image(rec['product_id'])
+                        if image_url:
+                            try:
+                                response = requests.get(image_url, timeout=5)
+                                img = Image.open(BytesIO(response.content))
+                                st.image(img, use_column_width=True)
+                            except:
+                                st.image("https://via.placeholder.com/150x150/CCCCCC/000000?text=No+Image")
+                        else:
+                            st.image("https://via.placeholder.com/150x150/CCCCCC/000000?text=No+Image")
 
-                            # Display recommendation
-                            image_url = get_product_image(rec['product_id'])
-                            if image_url:
-                                try:
-                                    response = requests.get(image_url, timeout=5)
-                                    img = Image.open(BytesIO(response.content))
-                                    st.image(img, use_column_width=True)
-                                except:
-                                    st.image("https://via.placeholder.com/150x150/CCCCCC/000000?text=No+Image")
+                        st.markdown(f"**{rec['title'][:40]}...**")
+                        
+                        # Similarity badge
+                        st.markdown(f"<span class='similarity-badge'>🎯 {rec['similarity_score']}% Match</span>", 
+                                  unsafe_allow_html=True)
+                        
+                        st.write(f"⭐ {rec['rating']} | ₹{rec['price']:,}")
+                        st.caption(f"Category: {rec['category']}")
 
-                            st.markdown(f"**{rec['title'][:40]}...**")
-                            st.write(f"Similarity: {rec['similarity_score']}%")
-                            st.write(f"⭐ {rec['rating']} | ₹{rec['price']:,}")
-
-                            # Add to cart button
-                            if st.button("View Details", key=f"rec_{rec['product_id']}"):
-                                st.session_state.selected_product = rec['product_id']
-                                st.rerun()
-
-                            st.markdown("</div>", unsafe_allow_html=True)
+                        # Buy button for recommendations
+                        if st.button("🛒 Buy This Too", key=f"rec_buy_{rec['product_id']}", use_container_width=True):
+                            st.session_state.selected_product = rec['product_id']
+                            st.success(f"Added to cart: {rec['title'][:30]}...")
+                            st.rerun()
             else:
-                st.warning("No recommendations found for this product.")
-
-        # Clear selection button
-        if st.button("Clear Selection"):
+                st.warning("No similar products found.")
+        else:
+            st.error("Product not found!")
             st.session_state.selected_product = None
-            st.rerun()
 
     # Footer
     st.markdown("---")
-    col1, col2, col3 = st.columns(3)
-    with col2:
-        st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-        st.write("Powered by KNN Machine Learning")
-        st.write(f"Total Products in System: {len(df)}")
-        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+    st.write("🤖 **Powered by KNN Machine Learning Algorithm**")
+    st.write(f"📊 **{len(df)} Products** | 🏷️ **{len(df['category'].unique())} Categories** | ⭐ **Avg Rating: {df['rating'].mean():.2f}**")
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
