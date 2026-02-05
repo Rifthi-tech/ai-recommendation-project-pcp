@@ -9,7 +9,7 @@ import base64
 
 # Set page config
 st.set_page_config(
-    page_title="E-Commerce Product Recommendations",
+    page_title="Quick Buy",
     page_icon="🛍️",
     layout="wide"
 )
