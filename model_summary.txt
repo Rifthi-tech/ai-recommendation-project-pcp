@@ -1,0 +1,24 @@
+
+PRODUCT RECOMMENDATION SYSTEM - MODEL SUMMARY
+==================================================
+
+DATASET INFORMATION:
+- Total Products: 1000
+- Total Categories: 97
+- Features Used: 725
+- Average Rating: 3.62 if 'rating' in df.columns else 'N/A'
+
+MODEL INFORMATION:
+- Algorithm: K-Nearest Neighbors (KNN)
+- Similarity Metric: Cosine Similarity
+- Number of Neighbors: 11
+- Training Samples: 1000
+
+PERFORMANCE METRICS:
+- Average Similarity Score: 0.593
+- Same Category Rate: 90.00%
+- Price Similarity Rate: 56.67%
+
+OUTPUT FILES:
+1. product_recommendation_model.pkl - Trained model
+2. product_recommendations.csv - All recommendations
