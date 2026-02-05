@@ -205,7 +205,7 @@ def get_recommendations(product_id, n=5):
 # Main App
 def main():
     # Header
-    st.markdown("<h1 class='main-header'>🛍️ E-Commerce Product Recommendations</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 class='main-header'>🛍️ Quick Buy</h1>", unsafe_allow_html=True)
 
     # Initialize session state
     if 'selected_product' not in st.session_state:
