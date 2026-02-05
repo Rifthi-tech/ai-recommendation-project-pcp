@@ -62,10 +62,10 @@ product_id = 8376765  # Backpack
 recommendations = get_recommendations(product_id, n=5)
 
 - Output similar products with:
- - Titles, categories, ratings
+- Titles, categories, ratings
 - Similarity scores (0-1)
- - Prices and product IDs
- - 
+- Prices and product IDs
+ 
 Features:
 - Search by Product ID or Name
 - Real-time recommendations
@@ -96,6 +96,33 @@ The system expects a CSV file with columns:
 - Similarity Calculation: Use cosine similarity in KNN
 - Recommendation Generation: Find nearest neighbors
 - Quality Evaluation: Calculate accuracy metrics
+
+
+📁 Project Structure
+AI-Based-Personalized-Product-Recommendation-System/
+- E-Commerce_Dataset.csv              # Main product dataset
+- Product_Recommendation_Training.ipynb  # Model training notebook
+- product_recommendation_model.pkl     # Trained KNN model
+- app.py                              # Streamlit web application
+- product_recommendations.csv         # Generated recommendations
+- requirements.txt                        # Main project dependencies
+- README.md                              # This file
+
+Prerequisites
+- Python 3.8 or higher
+- pip (Python package manager)
+
+Option 1: Quick Installation (Recommended)
+1. Clone the repository
+- git clone https://github.com/yourusername/ai-recommendation-project-pcp.git
+- cd ai-recommendation-project-pcp
+
+2. Install dependencies
+- pip install -r requirements.txt
+
+3. Run the web application
+- cd webapp
+- streamlit run app.py
 
 🤝 Contributing
 Contributions are welcome! Please feel free to submit a Pull Request.
