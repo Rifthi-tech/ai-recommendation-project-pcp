@@ -295,14 +295,6 @@ def main():
         else:
             st.error("Product not found!")
             st.session_state.selected_product = None
-
-    # Footer
-    st.markdown("---")
-    st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-    st.write("🤖 **Powered by KNN Machine Learning Algorithm**")
-    st.write(f"📊 **{len(df)} Products** | 🏷️ **{len(df['category'].unique())} Categories** | ⭐ **Avg Rating: {df['rating'].mean():.2f}**")
-    st.markdown("</div>", unsafe_allow_html=True)
-
-
+            
 if __name__ == "__main__":
     main()
