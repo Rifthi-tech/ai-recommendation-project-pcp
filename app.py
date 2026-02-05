@@ -295,6 +295,6 @@ def main():
         else:
             st.error("Product not found!")
             st.session_state.selected_product = None
-            
-if __name__ == "__main__":
+
+if __name__ == "__main__";
     main()
